@@ -1,0 +1,5 @@
+lib*
+ls*
+venv*
+pyvenv.cfg
+data*
