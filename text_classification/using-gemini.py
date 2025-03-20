@@ -8,8 +8,8 @@ from sklearn.metrics import accuracy_score, classification_report
 from collections import Counter
 import numpy as np
 import json
-from imblearn.over_sampling import SMOTE  # Import SMOTE
-from sklearn.feature_extraction.text import TfidfVectorizer  # Import TfidfVectorizer
+from imblearn.over_sampling import SMOTE
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # 1. Data Preparation
 class TweetDataset(Dataset):
@@ -42,17 +42,13 @@ def build_vocab(tweets, min_freq=2):
 def tokenize(text):
     return text.split()
 
-
-# 1. Data Preparation
-# ... (TweetDataset, build_vocab, tokenize functions remain the same)
-
 # Load JSON data
 with open('/Users/cam/go/src/github.com/dyluth/votes/classifier/approvedResponses.json', 'r') as f:
     data = json.load(f)
     df = pd.DataFrame(data)
 
     # Modify ApprovedResponse values using pandas
-    df['ApprovedResponse'] = df['ApprovedResponse'].str.split(': ', n=1, expand=True)[1]
+    df['ApprovedResponse'] = df['ApprovedResponse'].str.split('the policy: ', n=1, expand=True)[1]
 
     # Handle NaN values
     df = df.dropna(subset=['ApprovedResponse'])
@@ -79,14 +75,13 @@ if singleton_labels:
     print(f"Removed {len(singleton_labels)} singleton classes.")
 
 # Re-factorize after removing singleton classes
-labels_factorized = pd.factorize([labels[i] for i, keep in enumerate(indices_to_keep) if keep])[0]
+unique_labels = [labels[i] for i, keep in enumerate(indices_to_keep) if keep]
+labels_factorized = pd.factorize(unique_labels)[0]
 
 # TF-IDF Vectorization
 tfidf_vectorizer = TfidfVectorizer()
 tweets_flat = [" ".join(tweet) for tweet in tweets_tokenized]
 tweets_tfidf = tfidf_vectorizer.fit_transform(tweets_flat).toarray()
-
-
 
 # Oversampling using SMOTE
 smote = SMOTE(random_state=42, k_neighbors=1)
@@ -127,7 +122,7 @@ class TextClassifier(nn.Module):
 vocab_size = len(vocab)
 embedding_dim = 100
 hidden_dim = 128
-output_dim = len(np.unique(labels_resampled)) # Corrected line
+output_dim = len(np.unique(labels_resampled))
 
 model = TextClassifier(vocab_size, embedding_dim, hidden_dim, output_dim)
 
@@ -161,11 +156,8 @@ accuracy = accuracy_score(all_labels, all_preds)
 print(f'Accuracy: {accuracy}')
 print(classification_report(all_labels, all_preds))
 
-
 # Print the list of original classifications
 print("\nOriginal Classifications:")
 unique_labels_list = np.unique(unique_labels)
 for i, label in enumerate(unique_labels_list):
     print(f"{i}: {label}")
-
-    

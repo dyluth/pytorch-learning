@@ -3,3 +3,5 @@ ls*
 venv*
 pyvenv.cfg
 data*
+raw/*
+*.tmp
